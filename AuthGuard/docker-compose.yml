@@ -1,0 +1,44 @@
+services:
+  authguard:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - keycloak
+    environment:
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - JWKS_URL=http://keycloak:8080/realms/master/protocol/openid-connect/certs
+      - TARGET_SERVICE=http://service:4000
+      - RATE_LIMIT=100
+      - WINDOW_SECONDS=60
+    networks:
+      - authguard
+
+  service:
+    image: node:18-alpine
+    command: npx http-server -p 4000
+    networks:
+      - authguard
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - authguard
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    networks:
+      - authguard
+
+networks:
+  authguard:
