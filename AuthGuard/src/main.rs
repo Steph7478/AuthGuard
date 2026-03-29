@@ -20,8 +20,8 @@ use services::redis::RedisService;
 
 #[derive(Clone)]
 struct AppState {
-    config: Arc<config::AppConfig>,
-    policy: Arc<config::Policy>,
+    config: Arc<config::config::AppConfig>,
+    policy: Arc<config::config::Policy>,
     redis: Arc<RedisService>,
 }
 
@@ -29,7 +29,7 @@ struct AppState {
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    let (config, policy) = config::load_config();
+    let (config, policy) = config::config::load_config();
 
     let state = AppState {
         config: Arc::new(config.clone()),
@@ -56,5 +56,5 @@ async fn main() {
 }
 
 async fn proxy_handler(State(state): State<AppState>, req: Request<Body>) -> impl IntoResponse {
-    proxy::forward(req, &state.config.target_service).await
+    proxy::proxy::forward(req, &state.config.target_service).await
 }

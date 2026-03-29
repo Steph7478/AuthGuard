@@ -1,7 +1,5 @@
-use crate::{
-    config::{AppConfig, Policy},
-    services::redis::RedisService,
-};
+use crate::config::config::{AppConfig, Policy};
+use crate::services::redis::RedisService;
 use axum::{
     body::Body,
     http::{Request, StatusCode},
@@ -32,12 +30,15 @@ pub async fn security_layer(
             .headers()
             .get("authorization")
             .ok_or(StatusCode::UNAUTHORIZED)?;
-        let token = auth.to_str().unwrap().replace("Bearer ", "");
+        
+        let token = auth.to_str().map_err(|_| StatusCode::UNAUTHORIZED)?.replace("Bearer ", "");
+        
         crate::auth::jwt::verify(&token, &config.jwks_url)
             .await
             .map_err(|_| StatusCode::UNAUTHORIZED)?;
     }
 
     crate::middleware::ratelimit::check(ip, &config, &redis).await?;
+    
     Ok(next.run(req).await)
 }
