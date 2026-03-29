@@ -8,6 +8,7 @@ use axum::{
     Router,
 };
 use std::sync::Arc;
+use std::time::Instant;
 
 mod auth;
 mod config;
@@ -56,5 +57,16 @@ async fn main() {
 }
 
 async fn proxy_handler(State(state): State<AppState>, req: Request<Body>) -> impl IntoResponse {
-    proxy::proxy::forward(req, &state.config.target_service).await
+    let method = req.method().to_string();
+    let path = req.uri().path().to_string();
+    let start = Instant::now();
+
+    let response = proxy::proxy::forward(req, &state.config.target_service).await;
+    
+    let status = response.status().as_u16().to_string();
+
+    observability::metrics::record(&method, &path, &status);
+    observability::metrics::record_duration(&method, &path, start);
+
+    response
 }
