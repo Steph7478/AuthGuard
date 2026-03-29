@@ -1,20 +1,21 @@
+use axum::Server;
 use axum::{
-    Router,
-    routing::{any, get},
-    middleware::from_fn_with_state,
-    extract::State,
-    response::IntoResponse,
     body::Body,
+    extract::State,
     http::Request,
+    middleware::from_fn_with_state,
+    response::IntoResponse,
+    routing::{any, get},
+    Router,
 };
 use std::sync::Arc;
 
+mod auth;
 mod config;
 mod middleware;
-mod auth;
+mod observability;
 mod proxy;
 mod services;
-mod observability;
 
 use config::{AppConfig, Policy};
 use services::redis::RedisService;
@@ -41,7 +42,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/metrics", get(observability::metrics::metrics_handler))
-        .route("/*path", any(handler))
+        .route("/*path", any(proxy_handler))
         .layer(from_fn_with_state(
             state.clone(),
             |state: AppState, req, next| async move {
@@ -51,24 +52,21 @@ async fn main() {
                     state.config.clone(),
                     state.policy.clone(),
                     state.redis.clone(),
-                ).await
-            }
+                )
+                .await
+            },
         ))
         .with_state(state.clone());
 
     let addr = format!("0.0.0.0:{}", state.config.port);
-
     println!("🚀 AuthGuard running on {}", addr);
 
-    axum::Server::bind(&addr.parse().unwrap())
+    Server::bind(&addr.parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
 }
 
-async fn handler(
-    State(state): State<AppState>,
-    req: Request<Body>,
-) -> impl IntoResponse {
+async fn proxy_handler(State(state): State<AppState>, req: Request<Body>) -> impl IntoResponse {
     proxy::forward(req, &state.config.target_service).await
 }

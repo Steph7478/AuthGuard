@@ -31,6 +31,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "dotenv",
+ "hyper 0.14.32",
  "jsonwebtoken",
  "lazy_static",
  "prometheus",

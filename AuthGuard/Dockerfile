@@ -1,41 +1,20 @@
 # ========================
-# 🦀 BUILD STAGE
+# 🦀 BUILD + RUNTIME
 # ========================
-FROM rust:1.75 as builder
+FROM rustlang/rust:nightly-slim
 
 WORKDIR /app
 
-# cache de dependências
-COPY Cargo.toml Cargo.lock ./
-RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN cargo build --release
-RUN rm -rf src
-
-# build real
-COPY src ./src
-RUN cargo build --release
-
-# ========================
-# 🚀 RUNTIME STAGE
-# ========================
-FROM debian:bookworm-slim
-
-WORKDIR /app
-
-# dependências mínimas
 RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    curl \
+    pkg-config \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# binário
-COPY --from=builder /app/target/release/authguard /usr/local/bin/authguard
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
 
-# config
-COPY config.json .
+RUN cargo build --release
 
-# porta
 EXPOSE 3000
 
-# execução
-CMD ["authguard"]
+CMD ["./target/release/authguard"]

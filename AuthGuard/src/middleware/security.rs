@@ -1,4 +1,9 @@
-use axum::{body::Body, http::Request, http::StatusCode, middleware::Next, response::Response};
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+    middleware::Next,
+    response::Response,
+};
 use std::sync::Arc;
 
 use crate::{
@@ -8,11 +13,11 @@ use crate::{
 
 pub async fn security_layer(
     req: Request<Body>,
-    next: Next,
+    next: Next<Body>,
     config: Arc<AppConfig>,
     policy: Arc<Policy>,
     redis: Arc<RedisService>,
-) -> Result<Response, StatusCode> {
+) -> Result<Response<Body>, StatusCode> {
     let ip = req
         .headers()
         .get("x-forwarded-for")

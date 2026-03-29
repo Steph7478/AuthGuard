@@ -12,25 +12,15 @@ impl RedisService {
     }
 
     async fn conn(&self) -> redis::aio::Connection {
-        self.client
-            .get_async_connection()
-            .await
-            .unwrap()
+        self.client.get_async_connection().await.unwrap()
     }
 
-    pub async fn incr_with_expire(
-        &self,
-        key: &str,
-        window: usize,
-    ) -> i32 {
+    pub async fn incr_with_expire(&self, key: &str, window: usize) -> i32 {
         let mut conn = self.conn().await;
-
         let count: i32 = conn.incr(key, 1).await.unwrap();
-
         if count == 1 {
             let _: () = conn.expire(key, window).await.unwrap();
         }
-
         count
     }
 
