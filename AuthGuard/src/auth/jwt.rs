@@ -47,9 +47,12 @@ pub async fn verify(
 
     let decoding_key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e).map_err(|_| "RSA error")?;
 
-    let token_data =
-        decode::<KeycloakClaims>(token, &decoding_key, &Validation::new(Algorithm::RS256))
-            .map_err(|e| e.to_string())?;
+    let mut validation = Validation::new(Algorithm::RS256);
+    validation.validate_aud = false;
+    validation.set_issuer(&["http://keycloak:8080/realms/master"]);
+
+    let token_data = decode::<KeycloakClaims>(token, &decoding_key, &validation)
+        .map_err(|e| e.to_string())?;
 
     Ok(token_data.claims)
 }

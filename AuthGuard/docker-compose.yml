@@ -13,9 +13,7 @@ services:
       - PORT=3000
       - REDIS_URL=redis://redis:6379
       - JWKS_URL=http://keycloak:8080/realms/master/protocol/openid-connect/certs
-      - TARGET_SERVICE=http://service:4000
-      - RATE_LIMIT=100
-      - WINDOW_SECONDS=60
+      - TARGET_SERVICE=http://target_service:4000
     networks:
       - authguard
 
@@ -23,32 +21,11 @@ services:
     image: node:18-alpine
     container_name: target_service
     command: >
-      sh -c "echo 'const http = require(\"http\"); 
-      http.createServer((req, res) => { 
-        console.log(\"Headers recebidos:\", req.headers); 
-        res.end(\"OK\"); 
+      sh -c "echo 'const http = require(\"http\");
+      http.createServer((req, res) => {
+        console.log(\"Headers:\", JSON.stringify(req.headers, null, 2));
+        res.end(\"OK\");
       }).listen(4000);' > server.js && node server.js"
-    networks:
-      - authguard
-
-  tester:
-    image: alpine:latest
-    container_name: tester_bot
-    depends_on:
-      authguard:
-        condition: service_started
-    networks:
-      - authguard
-    entrypoint: ["sh", "-c", "sleep 10 && apk add --no-cache curl && curl -v http://authguard:3000/any-path"]
-
-  redis:
-    image: redis:7-alpine
-    container_name: redis_cache
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
     networks:
       - authguard
 
@@ -61,10 +38,26 @@ services:
       - KEYCLOAK_ADMIN_PASSWORD=admin
       - KC_HOSTNAME_STRICT=false
       - KC_HTTP_RELATIVE_PATH=/
+      # Variáveis que o JSON vai ler:
+      - KC_ADMIN_PASSWORD=admin
+      - KC_COST_CENTER=INFRA-002
+      - KC_GROUP=/TI/Infraestrutura
+      - SMTP_HOST=smtp.mailtrap.io
+      - SMTP_PORT=2525
+      - SMTP_USER=teste
+      - SMTP_PASSWORD=teste
     volumes:
       - ./AuthGuard/keycloak:/opt/keycloak/data/import/
     ports:
       - "8080:8080"
+    networks:
+      - authguard
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
     networks:
       - authguard
 

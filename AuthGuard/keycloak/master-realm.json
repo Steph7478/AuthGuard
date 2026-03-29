@@ -17,5 +17,137 @@
     "user": "${env.SMTP_USER}",
     "password": "${env.SMTP_PASSWORD}",
     "starttls": true
-  }
+  },
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Admin Total"
+      },
+      {
+        "name": "financeiro",
+        "description": "Acesso Financeiro"
+      },
+      {
+        "name": "rh",
+        "description": "Acesso RH"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "TI",
+      "path": "/TI",
+      "subGroups": [
+        {
+          "name": "Desenvolvimento",
+          "path": "/TI/Desenvolvimento",
+          "attributes": {
+            "costCenter": [
+              "DEV-001"
+            ]
+          }
+        },
+        {
+          "name": "Infraestrutura",
+          "path": "/TI/Infraestrutura",
+          "attributes": {
+            "costCenter": [
+              "INFRA-002"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "RH",
+      "path": "/RH",
+      "attributes": {
+        "costCenter": [
+          "RH-003"
+        ]
+      }
+    },
+    {
+      "name": "Financeiro",
+      "path": "/Financeiro",
+      "attributes": {
+        "costCenter": [
+          "FIN-004"
+        ]
+      }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "authguard-service",
+      "name": "AuthGuard Principal",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "webOrigins": [
+        "*"
+      ],
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "full.path": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "groups",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "costCenter",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "costCenter",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "costCenter",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${env.KC_ADMIN_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "attributes": {
+        "costCenter": [
+          "${env.KC_COST_CENTER}"
+        ]
+      },
+      "groups": [
+        "/TI/Infraestrutura"
+      ],
+      "realmRoles": [
+        "admin"
+      ]
+    }
+  ]
 }
