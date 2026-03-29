@@ -1,39 +1,26 @@
-use axum::{
-    body::Body,
-    http::{Request, Response, StatusCode},
-};
-use hyper::body::Bytes;
-use reqwest::{
-    header::{HeaderName as ReqHeaderName, HeaderValue as ReqHeaderValue},
-    Client, Method,
-};
+use axum::{body::Body, extract::Request, response::Response};
+use hyper::Uri;
+use hyper_util::{client::legacy::Client, rt::TokioExecutor};
+use std::str::FromStr;
 
-pub async fn forward(req: Request<Body>, target: &str) -> Response {
-    let client = Client::new();
+pub async fn forward(mut req: Request<Body>, target_service: &str) -> Response {
+    let path_query = req.uri().path_and_query().map(|v| v.as_str()).unwrap_or("");
+    let dest_uri = format!("{}{}", target_service, path_query);
 
-    let uri = format!("{}{}", target, req.uri());
-
-    let method = Method::from_bytes(req.method().as_str().as_bytes()).unwrap();
-
-    let mut request_builder = client.request(method, &uri);
-
-    for (key, value) in req.headers() {
-        let key = ReqHeaderName::from_bytes(key.as_str().as_bytes()).unwrap();
-        let value = ReqHeaderValue::from_bytes(value.as_bytes()).unwrap();
-        request_builder = request_builder.header(key, value);
+    if let Ok(uri) = Uri::from_str(&dest_uri) {
+        *req.uri_mut() = uri;
     }
 
-    let body_bytes = hyper::body::to_bytes(req.into_body()).await.unwrap();
-    request_builder = request_builder.body(body_bytes);
+    let client = Client::builder(TokioExecutor::new()).build_http();
 
-    let res = request_builder.send().await.unwrap();
-
-    let status = StatusCode::from_u16(res.status().as_u16()).unwrap();
-
-    let body = res.bytes().await.unwrap();
-
-    Response::builder()
-        .status(status)
-        .body(Body::from(body))
-        .unwrap()
+    match client.request(req).await {
+        Ok(res) => {
+            let (parts, body) = res.into_parts();
+            Response::from_parts(parts, Body::new(body))
+        }
+        Err(_) => Response::builder()
+            .status(502)
+            .body(Body::from("Bad Gateway"))
+            .unwrap(),
+    }
 }

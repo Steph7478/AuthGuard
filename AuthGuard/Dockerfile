@@ -1,20 +1,19 @@
-# ========================
-# 🦀 BUILD + RUNTIME
-# ========================
-FROM rustlang/rust:nightly-slim
-
+# Stage 1: Build
+FROM rustlang/rust:nightly-slim AS builder
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    pkg-config \
-    libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY Cargo.toml Cargo.lock ./
-COPY src ./src
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release
 
-RUN cargo build --release
+# Build real
+COPY src ./src
+RUN touch src/main.rs && cargo build --release
+
+FROM gcr.io/distroless/cc-debian12
+WORKDIR /app
+
+COPY --from=builder /app/target/release/authguard .
+COPY config.json . 
 
 EXPOSE 3000
-
-CMD ["./target/release/authguard"]
+CMD ["./authguard"]

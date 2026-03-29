@@ -8,57 +8,39 @@ struct Jwk {
     n: String,
     e: String,
 }
-
 #[derive(Deserialize)]
 struct Jwks {
     keys: Vec<Jwk>,
 }
 
 pub async fn verify(token: &str, jwks_url: &str) -> Result<(), String> {
-    let mut attempts = 0;
-
-    loop {
-        let result = try_verify(token, jwks_url).await;
-
-        if result.is_ok() {
+    for _ in 0..3 {
+        if let Ok(_) = try_verify(token, jwks_url).await {
             return Ok(());
         }
-
-        attempts += 1;
-
-        if attempts >= 3 {
-            return result;
-        }
-
         sleep(Duration::from_millis(300)).await;
     }
+    Err("verification failed".into())
 }
 
 async fn try_verify(token: &str, jwks_url: &str) -> Result<(), String> {
     let header = decode_header(token).map_err(|_| "invalid header")?;
-
+    let kid = header.kid.ok_or("missing kid")?;
     let jwks: Jwks = reqwest::get(jwks_url)
         .await
-        .map_err(|_| "jwks fetch error")?
+        .map_err(|_| "fetch error")?
         .json()
         .await
-        .map_err(|_| "jwks parse error")?;
-
-    let kid = header.kid.ok_or("missing kid")?;
+        .map_err(|_| "parse error")?;
 
     let jwk = jwks
         .keys
         .into_iter()
         .find(|k| k.kid == kid)
         .ok_or("key not found")?;
+    let key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e).map_err(|_| "invalid key")?;
 
-    let key =
-        DecodingKey::from_rsa_components(&jwk.n, &jwk.e).map_err(|_| "invalid decoding key")?;
-
-    let mut validation = Validation::new(Algorithm::RS256);
-    validation.validate_exp = true;
-
-    decode::<serde_json::Value>(token, &key, &validation).map_err(|_| "invalid token")?;
-
+    decode::<serde_json::Value>(token, &key, &Validation::new(Algorithm::RS256))
+        .map_err(|_| "invalid token")?;
     Ok(())
 }
