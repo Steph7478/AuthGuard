@@ -22,8 +22,24 @@ services:
   service:
     image: node:18-alpine
     container_name: target_service
+    command: >
+      sh -c "echo 'const http = require(\"http\"); 
+      http.createServer((req, res) => { 
+        console.log(\"Headers recebidos:\", req.headers); 
+        res.end(\"OK\"); 
+      }).listen(4000);' > server.js && node server.js"
     networks:
       - authguard
+
+  tester:
+    image: alpine:latest
+    container_name: tester_bot
+    depends_on:
+      authguard:
+        condition: service_started
+    networks:
+      - authguard
+    entrypoint: ["sh", "-c", "sleep 10 && apk add --no-cache curl && curl -v http://authguard:3000/any-path"]
 
   redis:
     image: redis:7-alpine
@@ -41,8 +57,10 @@ services:
     container_name: keycloak_auth
     command: start-dev --import-realm
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_RELATIVE_PATH=/
     volumes:
       - ./AuthGuard/keycloak:/opt/keycloak/data/import/
     ports:

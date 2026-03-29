@@ -8,7 +8,7 @@ pub struct RedisService {
 impl RedisService {
     pub fn new(url: &str) -> Self {
         Self {
-            client: redis::Client::open(url).unwrap(),
+            client: redis::Client::open(url).expect("Invalid Redis URL"),
         }
     }
 
@@ -16,7 +16,7 @@ impl RedisService {
         self.client
             .get_multiplexed_tokio_connection()
             .await
-            .unwrap()
+            .expect("Redis connection failed")
     }
 
     pub async fn incr_with_expire(&self, key: &str, window: usize) -> i32 {
@@ -34,5 +34,15 @@ impl RedisService {
 
     pub async fn block_ip(&self, key: &str, seconds: usize) {
         let _: () = self.c().await.set_ex(key, 1, seconds as u64).await.unwrap();
+    }
+
+    pub async fn get_key(&self, key: &str) -> Option<String> {
+        let mut c = self.c().await;
+        c.get(key).await.ok()
+    }
+
+    pub async fn set_key(&self, key: &str, value: &str, seconds: u64) {
+        let mut c = self.c().await;
+        let _: () = c.set_ex(key, value, seconds).await.unwrap();
     }
 }
