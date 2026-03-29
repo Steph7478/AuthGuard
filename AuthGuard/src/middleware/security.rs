@@ -1,4 +1,4 @@
-use axum::{http::Request, middleware::Next, response::Response, http::StatusCode};
+use axum::{body::Body, http::Request, http::StatusCode, middleware::Next, response::Response};
 use std::sync::Arc;
 
 use crate::{
@@ -6,15 +6,15 @@ use crate::{
     services::redis::RedisService,
 };
 
-pub async fn security_layer<B>(
-    req: Request<B>,
-    next: Next<B>,
+pub async fn security_layer(
+    req: Request<Body>,
+    next: Next,
     config: Arc<AppConfig>,
     policy: Arc<Policy>,
     redis: Arc<RedisService>,
 ) -> Result<Response, StatusCode> {
-
-    let ip = req.headers()
+    let ip = req
+        .headers()
         .get("x-forwarded-for")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("unknown");

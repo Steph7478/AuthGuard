@@ -1,4 +1,4 @@
-use jsonwebtoken::{decode, decode_header, DecodingKey, Validation, Algorithm};
+use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use serde::Deserialize;
 use tokio::time::{sleep, Duration};
 
@@ -52,13 +52,13 @@ async fn try_verify(token: &str, jwks_url: &str) -> Result<(), String> {
         .find(|k| k.kid == kid)
         .ok_or("key not found")?;
 
-    let key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e);
+    let key =
+        DecodingKey::from_rsa_components(&jwk.n, &jwk.e).map_err(|_| "invalid decoding key")?;
 
     let mut validation = Validation::new(Algorithm::RS256);
     validation.validate_exp = true;
 
-    decode::<serde_json::Value>(token, &key, &validation)
-        .map_err(|_| "invalid token")?;
+    decode::<serde_json::Value>(token, &key, &validation).map_err(|_| "invalid token")?;
 
     Ok(())
 }
