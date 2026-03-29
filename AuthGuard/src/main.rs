@@ -39,7 +39,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/metrics", get(observability::metrics::metrics_handler))
-        .route("/{*path}", any(proxy_handler))
+        .route("/*path", any(proxy_handler))
         .layer(from_fn_with_state(
             state.clone(),
             |State(s): State<AppState>, r, n| async move {

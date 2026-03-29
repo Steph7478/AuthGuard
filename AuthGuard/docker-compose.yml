@@ -1,11 +1,16 @@
+version: '3.8'
+
 services:
   authguard:
     build: .
+    container_name: authguard
     ports:
       - "3000:3000"
     depends_on:
-      - redis
-      - keycloak
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
     environment:
       - PORT=3000
       - REDIS_URL=redis://redis:6379
@@ -18,19 +23,37 @@ services:
 
   service:
     image: node:18-alpine
-    command: npx http-server -p 4000
+    container_name: target_service
+    command: >
+      node -e "
+      const http = require('http');
+      http.createServer((req, res) => {
+        console.log('-> AuthGuard encaminhou a requisição: ' + req.url);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          status: 'success', 
+          proxy: 'AuthGuard -> Node.js',
+          timestamp: new Date().toISOString() 
+        }));
+      }).listen(4000, '0.0.0.0', () => console.log('Mock Service rodando na :4000'));
+      "
     networks:
       - authguard
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    container_name: redis_cache
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - authguard
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak_auth
     command: start-dev
     environment:
       KEYCLOAK_ADMIN: admin
@@ -42,3 +65,4 @@ services:
 
 networks:
   authguard:
+    driver: bridge

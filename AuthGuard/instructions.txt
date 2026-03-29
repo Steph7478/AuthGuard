@@ -1,0 +1,5 @@
+TOKEN=$(curl -s -d "client_id=admin-cli" -d "username=admin" -d "password=admin" -d "grant_type=password" http://localhost:8080/realms/master/protocol/openid-connect/token | grep -oP '(?<="access_token":")[^"]*')
+
+echo $TOKEN
+
+curl -i http://localhost:3000/api/teste -H "Authorization: Bearer $TOKEN"
