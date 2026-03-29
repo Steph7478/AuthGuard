@@ -1,0 +1,18 @@
+{
+    "roles": {
+        "realm": [
+            {
+                "name": "admin",
+                "description": "Admin Total"
+            },
+            {
+                "name": "financeiro",
+                "description": "Acesso Financeiro"
+            },
+            {
+                "name": "rh",
+                "description": "Acesso RH"
+            }
+        ]
+    }
+}

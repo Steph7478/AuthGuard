@@ -22,19 +22,6 @@ services:
   service:
     image: node:18-alpine
     container_name: target_service
-    command: >
-      node -e "
-      const http = require('http');
-      http.createServer((req, res) => {
-        console.log('-> AuthGuard encaminhou a requisição: ' + req.url);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          status: 'success', 
-          proxy: 'AuthGuard -> Node.js',
-          timestamp: new Date().toISOString() 
-        }));
-      }).listen(4000, '0.0.0.0', () => console.log('Mock Service rodando na :4000'));
-      "
     networks:
       - authguard
 
@@ -52,10 +39,12 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak_auth
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ./AuthGuard/keycloak:/opt/keycloak/data/import/
     ports:
       - "8080:8080"
     networks:

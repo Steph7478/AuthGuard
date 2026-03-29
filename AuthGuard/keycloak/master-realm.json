@@ -1,0 +1,21 @@
+{
+  "realm": "master",
+  "displayName": "Keycloak Master",
+  "enabled": true,
+  "sslRequired": "external",
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "maxFailureWaitSeconds": 900,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifetime": 36000,
+  "smtpServer": {
+    "host": "${env.SMTP_HOST}",
+    "port": "${env.SMTP_PORT}",
+    "from": "noreply@sistema.com",
+    "auth": true,
+    "user": "${env.SMTP_USER}",
+    "password": "${env.SMTP_PASSWORD}",
+    "starttls": true
+  }
+}

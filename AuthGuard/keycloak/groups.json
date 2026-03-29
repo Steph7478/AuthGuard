@@ -1,0 +1,44 @@
+[
+    {
+        "name": "TI",
+        "path": "/TI",
+        "subGroups": [
+            {
+                "name": "Desenvolvimento",
+                "path": "/TI/Desenvolvimento",
+                "attributes": {
+                    "costCenter": [
+                        "DEV-001"
+                    ]
+                }
+            },
+            {
+                "name": "Infraestrutura",
+                "path": "/TI/Infraestrutura",
+                "attributes": {
+                    "costCenter": [
+                        "INFRA-002"
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "name": "RH",
+        "path": "/RH",
+        "attributes": {
+            "costCenter": [
+                "RH-003"
+            ]
+        }
+    },
+    {
+        "name": "Financeiro",
+        "path": "/Financeiro",
+        "attributes": {
+            "costCenter": [
+                "FIN-004"
+            ]
+        }
+    }
+]
