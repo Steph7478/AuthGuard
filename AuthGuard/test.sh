@@ -9,24 +9,24 @@ echo -e "${BLUE}═════════════════════�
 echo -e "${BLUE}        AuthGuard Test${NC}"
 echo -e "${BLUE}════════════════════════════════════════${NC}"
 
-echo -e "\n${YELLOW}O client é público ou confidencial?${NC}"
-echo "1) Público (sem client secret)"
-echo "2) Confidencial (com client secret)"
-read -p "Escolha (1/2): " CLIENT_TYPE
+echo -e "\n${YELLOW}Is the client public or confidential?${NC}"
+echo "1) Public (no client secret)"
+echo "2) Confidential (with client secret)"
+read -p "Choose (1/2): " CLIENT_TYPE
 
 if [ "$CLIENT_TYPE" = "2" ]; then
-    read -p "Digite o client secret (padrão: qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky): " CLIENT_SECRET
+    read -p "Enter client secret (default: qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky): " CLIENT_SECRET
     CLIENT_SECRET=${CLIENT_SECRET:-qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky}
     
-    echo -e "\n${YELLOW}Escolha o tipo de fluxo:${NC}"
-    echo "1) client_credentials (token do serviço - sem grupos)"
-    echo "2) password (token do usuário - COM grupos)"
-    read -p "Escolha (1/2): " FLOW
+    echo -e "\n${YELLOW}Choose the flow type:${NC}"
+    echo "1) client_credentials (service token - no groups)"
+    echo "2) password (user token - WITH groups)"
+    read -p "Choose (1/2): " FLOW
     
     if [ "$FLOW" = "2" ]; then
-        read -p "Username (padrão: admin): " USERNAME
+        read -p "Username (default: admin): " USERNAME
         USERNAME=${USERNAME:-admin}
-        read -sp "Password (padrão: admin): " PASSWORD
+        read -sp "Password (default: admin): " PASSWORD
         PASSWORD=${PASSWORD:-admin}
         echo ""
         
@@ -45,9 +45,9 @@ if [ "$CLIENT_TYPE" = "2" ]; then
           -d "grant_type=client_credentials")
     fi
 else
-    read -p "Username (padrão: admin): " USERNAME
+    read -p "Username (default: admin): " USERNAME
     USERNAME=${USERNAME:-admin}
-    read -sp "Password (padrão: admin): " PASSWORD
+    read -sp "Password (default: admin): " PASSWORD
     PASSWORD=${PASSWORD:-admin}
     echo ""
     
@@ -59,36 +59,18 @@ else
       -d "grant_type=password")
 fi
 
-echo -e "${YELLOW}Resposta do Keycloak:${NC}"
-echo "$RESPONSE"
-echo ""
-
-# Extrair token se existir
 TOKEN=$(echo "$RESPONSE" | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
 
 if [ -n "$TOKEN" ]; then
-    echo -e "${GREEN}✓ Token obtido${NC}"
-    echo -e "${BLUE}Token: ${TOKEN:0:50}...${NC}"
+    echo -e "${GREEN}✓ Token obtained${NC}"
     
-    echo -e "\n${YELLOW}[2/3] Verificando grupos...${NC}"
-    PAYLOAD=$(echo $TOKEN | cut -d. -f2)
-    DECODED=$(echo $PAYLOAD | base64 -d 2>/dev/null)
-    echo -e "${GREEN}Payload decodificado:${NC}"
-    echo "$DECODED"
-    echo ""
-    
-    echo -e "\n${YELLOW}[3/3] Testando AuthGuard...${NC}"
+    echo -e "\n${YELLOW}Testing AuthGuard...${NC}"
     curl -s -w "\n${BLUE}HTTP Status: %{http_code}${NC}\n" \
       -H "Authorization: Bearer $TOKEN" \
       http://localhost:3000/admin
 else
-    echo -e "\n${RED}✗ Erro ao obter token${NC}"
-    echo -e "${YELLOW}Possíveis causas:${NC}"
-    echo "  - Client não existe"
-    echo "  - Client secret inválido"
-    echo "  - Client não tem serviceAccountsEnabled (para client_credentials)"
-    echo "  - Usuário não existe (para password)"
-    echo "  - Senha incorreta (para password)"
+    echo -e "\n${RED}✗ Failed to obtain token${NC}"
+    echo -e "${YELLOW}Response:${NC} $RESPONSE"
 fi
 
 echo -e "\n${BLUE}════════════════════════════════════════${NC}"
