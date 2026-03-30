@@ -13,15 +13,22 @@ A high-performance authentication and authorization gateway built in Rust. AuthG
 
 ## 🛠️ Getting Started
 
+markdown
 ### 1. Installation
-clone the repository
+```bash
+git clone git@github.com:Steph7478/AuthGuard.git
 cd authguard
+```
 
-### 2. Execution
+2. Execution
+```bash
 docker-compose up -d
+```
 
-### 2. Test
+3. Test
+```bash
 ./test.sh
+```
 
 ## ⚙️ Configuration Reference
 
