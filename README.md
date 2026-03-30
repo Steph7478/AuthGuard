@@ -17,15 +17,10 @@ A high-performance authentication and authorization gateway built in Rust. AuthG
 git clone https://github.com/yourusername/authguard.git
 cd authguard
 
-### 2. Configuration
-Edit config.json to define your security policies:
-{
-  "require_auth": true,
-  "block_ips": []
-}
-
-### 3. Execution
+### 2. Execution
 docker-compose up -d
+
+### 2. Test
 ./test.sh
 
 ## ⚙️ Configuration Reference
