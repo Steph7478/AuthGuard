@@ -14,7 +14,7 @@ A high-performance authentication and authorization gateway built in Rust. AuthG
 ## 🛠️ Getting Started
 
 ### 1. Installation
-git clone https://github.com/yourusername/authguard.git
+clone the repository
 cd authguard
 
 ### 2. Execution
