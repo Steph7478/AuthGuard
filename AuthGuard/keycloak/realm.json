@@ -8,15 +8,7 @@
   "maxFailureWaitSeconds": 900,
   "accessTokenLifespan": 300,
   "ssoSessionIdleTimeout": 1800,
-  "smtpServer": {
-    "host": "${env.SMTP_HOST}",
-    "port": "${env.SMTP_PORT}",
-    "from": "noreply@sistema.com",
-    "auth": true,
-    "user": "${env.SMTP_USER}",
-    "password": "${env.SMTP_PASSWORD}",
-    "starttls": true
-  },
+  "requiredActions": [],
   "roles": {
     "realm": [
       {
@@ -85,6 +77,7 @@
       "protocol": "openid-connect",
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
+      "secret": "qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky",
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
@@ -128,15 +121,10 @@
       "credentials": [
         {
           "type": "password",
-          "value": "${env.KC_ADMIN_PASSWORD}",
+          "value": "admin",
           "temporary": false
         }
       ],
-      "attributes": {
-        "costCenter": [
-          "${env.KC_COST_CENTER}"
-        ]
-      },
       "groups": [
         "/TI/Infraestrutura"
       ],
