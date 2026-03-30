@@ -1,14 +1,16 @@
 {
   "realm": "authguard",
-  "displayName": "Keycloak Master",
+  "displayName": "AuthGuard Realm",
   "enabled": true,
+
   "sslRequired": "external",
   "bruteForceProtected": true,
   "failureFactor": 5,
   "maxFailureWaitSeconds": 900,
+
   "accessTokenLifespan": 300,
   "ssoSessionIdleTimeout": 1800,
-  "ssoSessionMaxLifetime": 36000,
+
   "smtpServer": {
     "host": "${env.SMTP_HOST}",
     "port": "${env.SMTP_PORT}",
@@ -18,22 +20,15 @@
     "password": "${env.SMTP_PASSWORD}",
     "starttls": true
   },
+
   "roles": {
     "realm": [
-      {
-        "name": "admin",
-        "description": "Admin Total"
-      },
-      {
-        "name": "financeiro",
-        "description": "Acesso Financeiro"
-      },
-      {
-        "name": "rh",
-        "description": "Acesso RH"
-      }
+      { "name": "admin", "description": "Admin Total" },
+      { "name": "financeiro", "description": "Acesso Financeiro" },
+      { "name": "rh", "description": "Acesso RH" }
     ]
   },
+
   "groups": [
     {
       "name": "TI",
@@ -43,18 +38,14 @@
           "name": "Desenvolvimento",
           "path": "/TI/Desenvolvimento",
           "attributes": {
-            "costCenter": [
-              "DEV-001"
-            ]
+            "costCenter": ["DEV-001"]
           }
         },
         {
           "name": "Infraestrutura",
           "path": "/TI/Infraestrutura",
           "attributes": {
-            "costCenter": [
-              "INFRA-002"
-            ]
+            "costCenter": ["INFRA-002"]
           }
         }
       ]
@@ -63,38 +54,35 @@
       "name": "RH",
       "path": "/RH",
       "attributes": {
-        "costCenter": [
-          "RH-003"
-        ]
+        "costCenter": ["RH-003"]
       }
     },
     {
       "name": "Financeiro",
       "path": "/Financeiro",
       "attributes": {
-        "costCenter": [
-          "FIN-004"
-        ]
+        "costCenter": ["FIN-004"]
       }
     }
   ],
+
   "clients": [
     {
       "clientId": "authguard-service",
-      "name": "AuthGuard Principal",
+      "name": "AuthGuard Backend",
       "enabled": true,
       "protocol": "openid-connect",
-      "publicClient": true,
-      "bearerOnly": false,
+
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+
       "serviceAccountsEnabled": true,
-      "standardFlowEnabled": true,
-      "directAccessGrantsEnabled": true,
-      "webOrigins": [
-        "*"
-      ],
-      "redirectUris": [
-        "http://localhost:3000/*"
-      ],
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+
+      "redirectUris": [],
+      "webOrigins": [],
+
       "protocolMappers": [
         {
           "name": "groups",
@@ -125,6 +113,7 @@
       ]
     }
   ],
+
   "users": [
     {
       "username": "admin",
@@ -138,16 +127,10 @@
         }
       ],
       "attributes": {
-        "costCenter": [
-          "${env.KC_COST_CENTER}"
-        ]
+        "costCenter": ["${env.KC_COST_CENTER}"]
       },
-      "groups": [
-        "/TI/Infraestrutura"
-      ],
-      "realmRoles": [
-        "admin"
-      ]
+      "groups": ["/TI/Infraestrutura"],
+      "realmRoles": ["admin"]
     }
   ]
 }

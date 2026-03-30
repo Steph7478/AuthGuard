@@ -38,19 +38,12 @@ services:
     container_name: keycloak_auth
     command: start-dev --import-realm
     environment:
-      - KEYCLOAK_ADMIN=admin
-      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
       - KC_HOSTNAME_STRICT=false
       - KC_HTTP_RELATIVE_PATH=/
-      - KC_ADMIN_PASSWORD=admin
-      - KC_COST_CENTER=INFRA-002
-      - KC_GROUP=/TI/Infraestrutura
-      - SMTP_HOST=smtp.mailtrap.io
-      - SMTP_PORT=2525
-      - SMTP_USER=teste
-      - SMTP_PASSWORD=teste
     volumes:
-      - ./AuthGuard/keycloak:/opt/keycloak/data/import/
+      - ./keycloak:/opt/keycloak/data/import
     ports:
       - "8080:8080"
     networks:

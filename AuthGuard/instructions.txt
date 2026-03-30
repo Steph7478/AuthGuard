@@ -1,8 +1,7 @@
-docker exec -it tester_bot sh -c '
-# 1. Busca o JSON do token e extrai o campo access_token usando sed
-T=$(curl -s -d "client_id=authguard-service" -d "username=admin" -d "password=admin" -d "grant_type=password" http://keycloak:8080/realms/master/protocol/openid-connect/token | sed -E "s/.*\"access_token\":\"([^\"]+)\".*/\1/")
+docker exec -it testerbot sh
 
-# 2. Faz a chamada para o seu AuthGuard em Rust
-echo "--- Iniciando Requisição ---"
-curl -i -H "Authorization: Bearer $T" http://authguard:3000/admin/teste
-'
+curl -X POST http://keycloak:8080/realms/authguard/protocol/openid-connect/token \
+client>   -d "client_id=authguard-service" \
+  -d "username=admin" \
+  -d "password=admin" \
+  -d "grant_type=password"
