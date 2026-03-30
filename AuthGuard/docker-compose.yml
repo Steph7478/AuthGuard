@@ -3,19 +3,19 @@ services:
     build: .
     container_name: authguard
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     depends_on:
       redis:
         condition: service_healthy
       keycloak:
         condition: service_started
     environment:
-      - PORT=3000
-      - REDIS_URL=redis://redis:6379
-      - JWKS_URL=http://keycloak:8080/realms/authguard/protocol/openid-connect/certs
-      - TARGET_SERVICE=http://target_service:4000
-      - RATE_LIMIT=100
-      - WINDOW_SECONDS=60
+      - PORT=${PORT:-3000}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - JWKS_URL=${JWKS_URL:-http://keycloak:8080/realms/authguard/protocol/openid-connect/certs}
+      - TARGET_SERVICE=${TARGET_SERVICE:-http://target_service:4000}
+      - RATE_LIMIT=${RATE_LIMIT:-100}
+      - WINDOW_SECONDS=${WINDOW_SECONDS:-60}
     volumes:
       - ./config.json:/app/config.json
     networks:

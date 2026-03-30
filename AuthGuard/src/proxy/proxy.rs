@@ -4,16 +4,19 @@ use hyper_util::{client::legacy::Client, rt::TokioExecutor};
 use std::str::FromStr;
 
 pub async fn forward(mut req: Request<Body>, target_service: &str) -> Response {
-    let path_query = req.uri().path_and_query().map(|v| v.as_str()).unwrap_or("");
-    let dest_uri = format!("{}{}", target_service, path_query);
-
-    if let Ok(uri) = Uri::from_str(&dest_uri) {
+    if let Ok(uri) = Uri::from_str(&format!(
+        "{}{}",
+        target_service,
+        req.uri().path_and_query().map(|v| v.as_str()).unwrap_or("")
+    )) {
         *req.uri_mut() = uri;
     }
 
-    let client = Client::builder(TokioExecutor::new()).build_http();
-
-    match client.request(req).await {
+    match Client::builder(TokioExecutor::new())
+        .build_http()
+        .request(req)
+        .await
+    {
         Ok(res) => {
             let (parts, body) = res.into_parts();
             Response::from_parts(parts, Body::new(body))

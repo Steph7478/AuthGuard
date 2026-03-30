@@ -1,7 +1,0 @@
-docker exec -it testerbot sh
-
-curl -X POST http://keycloak:8080/realms/authguard/protocol/openid-connect/token \
-client>   -d "client_id=authguard-service" \
-  -d "username=admin" \
-  -d "password=admin" \
-  -d "grant_type=password"
