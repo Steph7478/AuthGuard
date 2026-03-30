@@ -11,9 +11,11 @@ A high-performance authentication and authorization gateway built in Rust. AuthG
 * 📈 **Observability**: Prometheus metrics endpoint for monitoring.
 * 🔄 **Reverse Proxy**: Seamlessly forwards requests to upstream services.
 
+<br/>
+
+
 ## 🛠️ Getting Started
 
-markdown
 ### 1. Installation
 ```bash
 git clone git@github.com:Steph7478/AuthGuard.git
@@ -30,6 +32,8 @@ docker-compose up -d
 ./test.sh
 ```
 
+<br/>
+
 ## ⚙️ Configuration Reference
 
 | Variable         | Description                | Default Value                |
@@ -39,6 +43,8 @@ docker-compose up -d
 | JWKS_URL         | Keycloak JWKS endpoint     | http://keycloak:8080/...     |
 | TARGET_SERVICE   | Upstream service URL       | http://target_service:4000   |
 | RATE_LIMIT       | Max requests per window    | 100                          |
+
+<br/>
 
 ## 🛣️ API Endpoints
 
