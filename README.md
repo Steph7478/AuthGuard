@@ -20,12 +20,12 @@ git clone git@github.com:Steph7478/AuthGuard.git
 cd authguard
 ```
 
-2. Execution
+### 2. Execution
 ```bash
 docker-compose up -d
 ```
 
-3. Test
+### 3. Test
 ```bash
 ./test.sh
 ```
