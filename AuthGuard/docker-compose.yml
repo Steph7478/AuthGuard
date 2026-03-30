@@ -12,7 +12,7 @@ services:
     environment:
       - PORT=3000
       - REDIS_URL=redis://redis:6379
-      - JWKS_URL=http://keycloak:8080/realms/master/protocol/openid-connect/certs
+      - JWKS_URL=http://keycloak:8080/realms/authguard/protocol/openid-connect/certs
       - TARGET_SERVICE=http://target_service:4000
       - RATE_LIMIT=100
       - WINDOW_SECONDS=60

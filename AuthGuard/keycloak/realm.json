@@ -1,5 +1,5 @@
 {
-  "realm": "master",
+  "realm": "authguard",
   "displayName": "Keycloak Master",
   "enabled": true,
   "sslRequired": "external",
@@ -84,7 +84,7 @@
       "name": "AuthGuard Principal",
       "enabled": true,
       "protocol": "openid-connect",
-      "publicClient": false,
+      "publicClient": true,
       "bearerOnly": false,
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": true,
