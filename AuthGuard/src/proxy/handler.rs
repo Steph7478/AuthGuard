@@ -16,15 +16,15 @@ pub async fn proxy_handler(State(state): State<AppState>, mut req: Request<Body>
         .extensions()
         .get::<crate::auth::claims::KeycloakClaims>()
     {
-        if path.starts_with("/admin") && !claims.groups.contains(&"/TI/Infraestrutura".to_string())
-        {
-            return StatusCode::FORBIDDEN.into_response();
-        }
+        if path.starts_with("/admin") {
+            let allowed = claims
+            .groups
+            .as_ref()
+            .map(|g| g.contains(&"/TI/Infraestrutura".to_string()))
+            .unwrap_or(false);
 
-        if let Some(ccs) = &claims.cost_center {
-            let cc_header = ccs.join(",");
-            if let Ok(value) = cc_header.parse() {
-                req.headers_mut().insert("X-Cost-Center", value);
+            if !allowed {
+                return StatusCode::FORBIDDEN.into_response();
             }
         }
     }
