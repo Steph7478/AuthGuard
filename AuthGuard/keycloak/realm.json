@@ -23,12 +23,13 @@
         "clientSecret": "${GOOGLE_CLIENT_SECRET}",
         "defaultScope": "openid profile email",
         "syncMode": "IMPORT",
-        "useJwksUrl": "false",
+        "useJwksUrl": "true",
         "redirectUri": "http://localhost:8080/realms/authguard/broker/google/endpoint",
         "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
         "tokenUrl": "https://oauth2.googleapis.com/token",
         "userInfoUrl": "https://www.googleapis.com/oauth2/v3/userinfo",
-        "validateSignature": "false",
+        "jwksUrl": "https://www.googleapis.com/oauth2/v3/certs",
+        "validateSignature": "true",
         "pkceEnabled": "false",
         "disableUserInfoService": "false"
       }

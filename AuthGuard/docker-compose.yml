@@ -53,6 +53,7 @@ services:
       - JAVA_OPTS_APPEND=-Dkeycloak.migration.replace-placeholders=true
     volumes:
       - ./keycloak:/opt/keycloak/data/import
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - "8080:8080"
     networks:
