@@ -1,52 +1,54 @@
-use axum::{
-    extract::State,
-    middleware::from_fn_with_state,
-    routing::{any, get},
-    Router,
-};
+use authguard::config;
+use authguard::middleware::auth_middleware;
+use authguard::observability;
+use authguard::policy::Policy;
+use authguard::services::RedisService;
+use authguard::state::AppState;
+use axum::{middleware, routing::get, Router};
+use std::net::SocketAddr;
 use std::sync::Arc;
 
-mod auth;
-mod config;
-mod middleware;
-mod observability;
-mod proxy;
-mod services;
-
-use services::redis::RedisService;
-
-#[derive(Clone)]
-pub struct AppState {
-    pub config: Arc<config::AppConfig>,
-    pub policy: Arc<config::Policy>,
-    pub redis: Arc<RedisService>,
-}
-
 #[tokio::main]
-async fn main() {
-    let (config, policy) = config::load_config();
-    let redis_service = Arc::new(RedisService::new(&config.redis_url));
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = Arc::new(config::load_config());
+    let redis = Arc::new(RedisService::new(&config.redis_url));
+    let policy = Arc::new(Policy::new(redis.clone()));
 
-    let port = config.port.clone();
+    let state = Arc::new(AppState {
+        config: config.clone(),
+        redis,
+        policy,
+    });
 
-    let state = AppState {
-        config: Arc::new(config),
-        policy: Arc::new(policy),
-        redis: redis_service,
-    };
+    let protected_routes = Router::new()
+        .route("/validate", get(validate_handler))
+        .layer(middleware::from_fn({
+            let state = state.clone();
+            move |req, next| {
+                let state = state.clone();
+                async move { auth_middleware(req, next, state).await }
+            }
+        }));
 
     let app = Router::new()
-        .route("/metrics", get(observability::metrics::metrics_handler))
-        .route("/*path", any(proxy::handler::proxy_handler))
-        .layer(from_fn_with_state(
-            state.clone(),
-            |State(s): State<AppState>, req, next| async move {
-                middleware::security::security_layer(req, next, s.config, s.policy, s.redis).await
-            },
-        ))
+        .merge(protected_routes)
+        .route("/health", get(health_check))
+        .route("/metrics", get(observability::handler))
         .with_state(state);
 
-    let addr = format!("0.0.0.0:{}", port);
-    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let addr: SocketAddr = format!("0.0.0.0:{}", config.port).parse()?;
+    println!("Server listening on {}", addr);
+
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+async fn validate_handler() -> &'static str {
+    "OK"
+}
+
+async fn health_check() -> &'static str {
+    "OK"
 }

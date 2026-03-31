@@ -1,27 +1,66 @@
 #!/bin/bash
+
+# Terminal Colors
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}════════════════════════════════════════${NC}"
-echo -e "${BLUE}        AuthGuard Test${NC}"
-echo -e "${BLUE}════════════════════════════════════════${NC}"
+echo -e "${BLUE}══════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}          AuthGuard Full Stack - Test Suite           ${NC}"
+echo -e "${BLUE}══════════════════════════════════════════════════════${NC}"
 
-echo -e "\n${YELLOW}Is the client public or confidential?${NC}"
-echo "1) Public (no client secret)"
-echo "2) Confidential (with client secret)"
-read -p "Choose (1/2): " CLIENT_TYPE
+# --- ENVIRONMENT SETTINGS ---
+# Default secret confirmed in your setup
+DEFAULT_SECRET="qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky"
+
+# Access URLs
+KEYCLOAK_URL="http://localhost:8080/auth/realms/authguard/protocol/openid-connect/token"
+API_GATEWAY_URL="http://localhost/api/users/me"
+AUTHGUARD_HEALTH="http://localhost:3000/health"
+
+# --- 1. CONTAINER STATUS CHECK ---
+echo -e "\n${YELLOW}[1/6] Checking Container Status:${NC}"
+SERVICES=("nginx_gateway" "authguard" "keycloak_auth" "redis_cache" "user_service")
+
+for service in "${SERVICES[@]}"; do
+    STATUS=$(docker ps -q -f name=$service)
+    if [ -n "$STATUS" ]; then
+        echo -e "  ${GREEN}✓ $service:${NC} Running"
+    else
+        echo -e "  ${RED}✗ $service:${NC} Stopped or Not Found"
+    fi
+done
+
+# --- 2. AUTHGUARD HEALTH CHECK ---
+echo -e "\n${YELLOW}[2/6] Testing AuthGuard Connectivity:${NC}"
+HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$AUTHGUARD_HEALTH")
+
+if [ "$HEALTH_RESPONSE" = "200" ]; then
+    echo -e "${GREEN}✓ AuthGuard is Online and Public (200 OK)${NC}"
+elif [ "$HEALTH_RESPONSE" = "401" ]; then
+    echo -e "${YELLOW}! AuthGuard is Active but /health is Protected (401)${NC}"
+    echo -e "${BLUE}  Note: Move /health outside the middleware layer in Rust to fix this.${NC}"
+else
+    echo -e "${RED}✗ Failed to connect to AuthGuard (Status: $HEALTH_RESPONSE)${NC}"
+    echo "  Check if port 3000 is open and the container is running."
+fi
+
+# --- 3. CLIENT CONFIGURATION ---
+echo -e "\n${YELLOW}[3/6] Keycloak Client Configuration:${NC}"
+echo "1) Public (No Client Secret)"
+echo "2) Confidential (With Client Secret)"
+read -p "Select (1/2): " CLIENT_TYPE
 
 if [ "$CLIENT_TYPE" = "2" ]; then
-    read -p "Enter client secret (default: qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky): " CLIENT_SECRET
-    CLIENT_SECRET=${CLIENT_SECRET:-qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky}
+    read -p "Enter Client Secret (Press Enter for default): " CLIENT_SECRET
+    CLIENT_SECRET=${CLIENT_SECRET:-$DEFAULT_SECRET}
     
-    echo -e "\n${YELLOW}Choose the flow type:${NC}"
-    echo "1) client_credentials (service token - no groups)"
-    echo "2) password (user token - WITH groups)"
-    read -p "Choose (1/2): " FLOW
+    echo -e "\n${YELLOW}[4/6] Authentication Flow Type:${NC}"
+    echo "1) client_credentials (Service-to-Service)"
+    echo "2) password (Real User - Supports Roles/Groups)"
+    read -p "Select (1/2): " FLOW
     
     if [ "$FLOW" = "2" ]; then
         read -p "Username (default: admin): " USERNAME
@@ -29,20 +68,9 @@ if [ "$CLIENT_TYPE" = "2" ]; then
         read -sp "Password (default: admin): " PASSWORD
         PASSWORD=${PASSWORD:-admin}
         echo ""
-        
-        RESPONSE=$(curl -s -X POST http://localhost:8080/realms/authguard/protocol/openid-connect/token \
-          -H "Content-Type: application/x-www-form-urlencoded" \
-          -d "client_id=authguard-service" \
-          -d "client_secret=$CLIENT_SECRET" \
-          -d "username=$USERNAME" \
-          -d "password=$PASSWORD" \
-          -d "grant_type=password")
+        DATA="-d client_id=authguard-service -d client_secret=$CLIENT_SECRET -d username=$USERNAME -d password=$PASSWORD -d grant_type=password"
     else
-        RESPONSE=$(curl -s -X POST http://localhost:8080/realms/authguard/protocol/openid-connect/token \
-          -H "Content-Type: application/x-www-form-urlencoded" \
-          -d "client_id=authguard-service" \
-          -d "client_secret=$CLIENT_SECRET" \
-          -d "grant_type=client_credentials")
+        DATA="-d client_id=authguard-service -d client_secret=$CLIENT_SECRET -d grant_type=client_credentials"
     fi
 else
     read -p "Username (default: admin): " USERNAME
@@ -50,27 +78,65 @@ else
     read -sp "Password (default: admin): " PASSWORD
     PASSWORD=${PASSWORD:-admin}
     echo ""
-    
-    RESPONSE=$(curl -s -X POST http://localhost:8080/realms/authguard/protocol/openid-connect/token \
-      -H "Content-Type: application/x-www-form-urlencoded" \
-      -d "client_id=authguard-service" \
-      -d "username=$USERNAME" \
-      -d "password=$PASSWORD" \
-      -d "grant_type=password")
+    DATA="-d client_id=authguard-service -d username=$USERNAME -d password=$PASSWORD -d grant_type=password"
 fi
+
+# --- 4. TOKEN RETRIEVAL ---
+echo -e "\n${BLUE}Requesting Token from Keycloak: ${KEYCLOAK_URL}...${NC}"
+RESPONSE=$(curl -s -X POST "$KEYCLOAK_URL" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    $DATA)
 
 TOKEN=$(echo "$RESPONSE" | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4)
 
-if [ -n "$TOKEN" ]; then
-    echo -e "${GREEN}✓ Token obtained${NC}"
+if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ]; then
+    echo -e "${GREEN}✓ Token obtained successfully!${NC}"
     
-    echo -e "\n${YELLOW}Testing AuthGuard...${NC}"
-    curl -s -w "\n${BLUE}HTTP Status: %{http_code}${NC}\n" \
-      -H "Authorization: Bearer $TOKEN" \
-      http://localhost:3000/admin
-else
-    echo -e "\n${RED}✗ Failed to obtain token${NC}"
-    echo -e "${YELLOW}Response:${NC} $RESPONSE"
-fi
+    # Display Claims if jq is installed
+    if command -v jq &> /dev/null; then
+        echo -e "\n${YELLOW}[5/6] Token Payload (Claims):${NC}"
+        echo $TOKEN | cut -d'.' -f2 | base64 -d 2>/dev/null | jq '.' || echo "Error decoding token JSON."
+    fi
 
-echo -e "\n${BLUE}════════════════════════════════════════${NC}"
+    # --- 5. NGINX GATEWAY TEST ---
+    echo -e "\n${YELLOW}[6/6] Testing Access via Nginx Gateway:${NC}"
+    echo -e "${BLUE}Calling: ${API_GATEWAY_URL}${NC}"
+    
+    RESULT=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
+      -H "Authorization: Bearer $TOKEN" \
+      "$API_GATEWAY_URL")
+    
+    BODY=$(echo "$RESULT" | sed '$d')
+    STATUS=$(echo "$RESULT" | grep "HTTP_CODE" | cut -d':' -f2)
+
+    if [ "$STATUS" = "200" ]; then
+        echo -e "${GREEN}✓ SUCCESS: Access Granted (200 OK)${NC}"
+        echo -e "${BLUE}User-Service Response:${NC} $BODY"
+    elif [ "$STATUS" = "401" ]; then
+        echo -e "${RED}✗ ERROR: Unauthorized (401)${NC}"
+        echo -e "${YELLOW}Tip: Check if AuthGuard correctly validated the Token Issuer (localhost vs keycloak_auth).${NC}"
+    elif [ "$STATUS" = "403" ]; then
+        echo -e "${RED}✗ ERROR: Forbidden (403)${NC}"
+        echo -e "${YELLOW}Tip: Valid token, but insufficient permissions or Rate Limit hit.${NC}"
+    elif [ "$STATUS" = "500" ]; then
+        echo -e "${RED}✗ ERROR: Internal Server Error (500)${NC}"
+        echo -e "${YELLOW}Tip: Check Nginx logs. It usually means AuthGuard returned 404 on the /validate route.${NC}"
+    else
+        echo -e "${RED}✗ ERROR: HTTP Status $STATUS${NC}"
+        echo "Response Body: $BODY"
+    fi
+    
+else
+    echo -e "\n${RED}✗ Failed to obtain token from Keycloak${NC}"
+    echo -e "${YELLOW}Server Response:${NC}"
+    if command -v jq &> /dev/null; then
+        echo "$RESPONSE" | jq '.'
+    else
+        echo "$RESPONSE"
+    fi
+    
+    echo -e "\n${YELLOW}Quick Diagnosis:${NC}"
+    echo "1. Does the 'authguard' Realm exist?"
+    echo "2. Is the 'authguard-service' client configured correctly?"
+    echo "3. Keycloak Logs: docker logs keycloak_auth"
+fi

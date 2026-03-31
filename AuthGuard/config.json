@@ -1,6 +1,0 @@
-{
-    "require_auth": true,
-    "rate_limit_by": "ip",
-    "block_ips": [],
-    "log_requests": true
-}

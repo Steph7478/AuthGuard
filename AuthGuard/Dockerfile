@@ -13,7 +13,6 @@ FROM gcr.io/distroless/cc-debian12
 WORKDIR /app
 
 COPY --from=builder /app/target/release/authguard .
-COPY config.json . 
 
 EXPOSE 3000
 CMD ["./authguard"]

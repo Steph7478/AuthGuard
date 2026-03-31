@@ -191,6 +191,16 @@
             "multivalued": "true",
             "userinfo.token.claim": "true"
           }
+        },
+        {
+          "name": "audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "authguard-service",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
         }
       ]
     }

@@ -1,0 +1,71 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./AuthGuard/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - authguard
+      - user-service
+    networks:
+      - authguard-network
+
+  authguard:
+    build: ./AuthGuard
+    container_name: authguard
+    ports:
+      - "3000:3000"
+    env_file: ./AuthGuard/.env
+    environment:
+      - RUST_LOG=debug
+      - REDIS_URL=redis://redis_cache:6379
+      - JWKS_URL=http://keycloak_auth:8080/auth/realms/authguard/protocol/openid-connect/certs
+      - JWT_ISSUER=http://localhost:8080/auth/realms/authguard
+      - JWT_AUDIENCE=authguard-service
+    depends_on:
+      - redis
+      - keycloak
+    networks:
+      - authguard-network
+
+  user-service:
+    image: node:18-alpine
+    container_name: user_service
+    command: sh -c "echo 'const http = require(\"http\"); http.createServer((req, res) => { res.end(\"OK\"); }).listen(4001);' > server.js && node server.js"
+    networks:
+      - authguard-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0.6
+    container_name: keycloak_auth
+    command: start-dev --import-realm
+    env_file: ./AuthGuard/.env
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - KC_HOSTNAME_STRICT=false
+      - KC_PROXY=edge
+      - KC_HTTP_ENABLED=true
+      - KC_HTTP_RELATIVE_PATH=/auth
+      - JAVA_OPTS_APPEND=-Dkeycloak.migration.replace-placeholders=true
+    volumes:
+      - ./AuthGuard/keycloak:/opt/keycloak/data/import
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - authguard-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    networks:
+      - authguard-network
+
+networks:
+  authguard-network:
+    driver: bridge
