@@ -16,14 +16,20 @@ A high-performance authentication and authorization gateway built in Rust. AuthG
 ## 🛠️ Getting Started
 
 ### 1. Installation
+``bash
 git clone git@github.com:Steph7478/AuthGuard.git
 cd authguard
+``
 
 ### 2. Execution
+``bash
 docker-compose up -d
+``
 
 ### 3. Test
+``bash
 ./test.sh
+``
 
 ### 4. Login Flow (Standard OIDC)
 To authenticate via Google and skip the Keycloak selection screen, redirect your frontend to:
