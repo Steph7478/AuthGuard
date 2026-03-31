@@ -19,7 +19,6 @@ services:
       - "3000:3000"
     env_file: ./AuthGuard/.env
     environment:
-      - RUST_LOG=debug
       - REDIS_URL=redis://redis_cache:6379
       - JWKS_URL=http://keycloak_auth:8080/auth/realms/authguard/protocol/openid-connect/certs
       - JWT_ISSUER=http://localhost:8080/auth/realms/authguard

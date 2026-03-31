@@ -24,7 +24,7 @@
         "defaultScope": "openid profile email",
         "syncMode": "IMPORT",
         "useJwksUrl": "true",
-        "redirectUri": "http://localhost:8080/realms/authguard/broker/google/endpoint",
+        "redirectUri": "http://localhost:8080/auth/realms/authguard/broker/google/endpoint",
         "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
         "tokenUrl": "https://oauth2.googleapis.com/token",
         "userInfoUrl": "https://www.googleapis.com/oauth2/v3/userinfo",
