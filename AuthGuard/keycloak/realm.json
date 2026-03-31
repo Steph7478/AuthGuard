@@ -2,7 +2,7 @@
   "realm": "authguard",
   "displayName": "AuthGuard Realm",
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "none",
   "bruteForceProtected": true,
   "failureFactor": 5,
   "maxFailureWaitSeconds": 900,
@@ -23,7 +23,14 @@
         "clientSecret": "${GOOGLE_CLIENT_SECRET}",
         "defaultScope": "openid profile email",
         "syncMode": "IMPORT",
-        "useJwksUrl": "true"
+        "useJwksUrl": "false",
+        "redirectUri": "http://localhost:8080/realms/authguard/broker/google/endpoint",
+        "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+        "tokenUrl": "https://oauth2.googleapis.com/token",
+        "userInfoUrl": "https://www.googleapis.com/oauth2/v3/userinfo",
+        "validateSignature": "false",
+        "pkceEnabled": "false",
+        "disableUserInfoService": "false"
       }
     }
   ],
@@ -67,7 +74,7 @@
     {
       "name": "profile-picture",
       "identityProviderAlias": "google",
-      "identityProviderMapper": "oidc-attribute-idp-mapper",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
       "config": {
         "claim": "picture",
         "userAttribute": "pictureUrl"
@@ -76,7 +83,7 @@
     {
       "name": "google-subject",
       "identityProviderAlias": "google",
-      "identityProviderMapper": "oidc-attribute-idp-mapper",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
       "config": {
         "claim": "sub",
         "userAttribute": "googleId"
