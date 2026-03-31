@@ -19,8 +19,8 @@
       "addReadTokenRoleOnCreate": true,
       "firstBrokerLoginFlowAlias": "first broker login",
       "config": {
-        "clientId": "${env.GOOGLE_CLIENT_ID}",
-        "clientSecret": "${env.GOOGLE_CLIENT_SECRET}",
+        "clientId": "${GOOGLE_CLIENT_ID}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET}",
         "defaultScope": "openid profile email",
         "syncMode": "IMPORT",
         "useJwksUrl": "true"
@@ -151,7 +151,7 @@
       "protocol": "openid-connect",
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "${env.KEYCLOAK_CLIENT_SECRET}",
+      "secret": "${KEYCLOAK_CLIENT_SECRET}",
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
@@ -195,7 +195,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "${env.ADMIN_PASSWORD}",
+          "value": "${ADMIN_PASSWORD}",
           "temporary": false
         }
       ],
