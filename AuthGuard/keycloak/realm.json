@@ -9,6 +9,80 @@
   "accessTokenLifespan": 300,
   "ssoSessionIdleTimeout": 1800,
   "requiredActions": [],
+  "identityProviders": [
+    {
+      "alias": "google",
+      "providerId": "google",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": true,
+      "addReadTokenRoleOnCreate": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${env.GOOGLE_CLIENT_ID}",
+        "clientSecret": "${env.GOOGLE_CLIENT_SECRET}",
+        "defaultScope": "openid profile email",
+        "syncMode": "IMPORT",
+        "useJwksUrl": "true"
+      }
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "username-google",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "oidc-username-idp-mapper",
+      "config": {
+        "claim": "email",
+        "template": "${CLAIM.email}"
+      }
+    },
+    {
+      "name": "first-name",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "given_name",
+        "userAttribute": "firstName"
+      }
+    },
+    {
+      "name": "last-name",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "family_name",
+        "userAttribute": "lastName"
+      }
+    },
+    {
+      "name": "email",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "claim": "email",
+        "userAttribute": "email"
+      }
+    },
+    {
+      "name": "profile-picture",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "oidc-attribute-idp-mapper",
+      "config": {
+        "claim": "picture",
+        "userAttribute": "pictureUrl"
+      }
+    },
+    {
+      "name": "google-subject",
+      "identityProviderAlias": "google",
+      "identityProviderMapper": "oidc-attribute-idp-mapper",
+      "config": {
+        "claim": "sub",
+        "userAttribute": "googleId"
+      }
+    }
+  ],
   "roles": {
     "realm": [
       {
@@ -77,7 +151,7 @@
       "protocol": "openid-connect",
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky",
+      "secret": "${env.KEYCLOAK_CLIENT_SECRET}",
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": true,
@@ -121,7 +195,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "admin",
+          "value": "${env.ADMIN_PASSWORD}",
           "temporary": false
         }
       ],
