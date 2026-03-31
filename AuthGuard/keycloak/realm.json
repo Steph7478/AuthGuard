@@ -1,8 +1,10 @@
 {
+  "id": "authguard",
   "realm": "authguard",
   "displayName": "AuthGuard Realm",
   "enabled": true,
   "sslRequired": "none",
+  "registrationAllowed": false,
   "bruteForceProtected": true,
   "failureFactor": 5,
   "maxFailureWaitSeconds": 900,
@@ -161,10 +163,16 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "${KEYCLOAK_CLIENT_SECRET}",
       "serviceAccountsEnabled": true,
-      "standardFlowEnabled": false,
+      "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": [],
-      "webOrigins": [],
+      "redirectUris": [
+        "http://localhost/callback",
+        "http://localhost:8080/*",
+        "http://localhost/*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
       "protocolMappers": [
         {
           "name": "groups",
