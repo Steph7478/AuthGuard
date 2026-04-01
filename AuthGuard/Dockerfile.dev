@@ -1,11 +1,14 @@
-FROM rustlang/rust:nightly-slim AS builder
+FROM rustlang/rust:nightly-slim
 WORKDIR /app
 
 RUN cargo install cargo-watch
 
 COPY Cargo.toml Cargo.lock ./
-RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release
+
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm src/main.rs
 
 COPY src ./src
+
+EXPOSE 3000
 
 CMD ["cargo", "watch", "-x", "run"]
