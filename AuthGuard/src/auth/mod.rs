@@ -2,6 +2,10 @@ use crate::services::RedisService;
 use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 
+const JWKS_CACHE_KEY: &str = "jwks";
+const CACHE_TTL: u64 = 86400;
+const TOKEN_LEEWAY: u64 = 60;
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Claims {
     pub sub: String,
@@ -12,70 +16,66 @@ pub struct Claims {
 }
 
 #[derive(Deserialize, Serialize)]
+struct Jwks {
+    keys: Vec<Jwk>,
+}
+
+#[derive(Deserialize, Serialize)]
 struct Jwk {
     kid: String,
     n: String,
     e: String,
 }
 
-#[derive(Deserialize, Serialize)]
-struct Jwks {
-    keys: Vec<Jwk>,
-}
-
 pub async fn verify(
     token: &str,
     jwks_url: &str,
-    jwt_issuer: &str,
+    issuer: &str,
     redis: &RedisService,
 ) -> Result<Claims, String> {
-    let header = decode_header(token).map_err(|e| format!("Invalid header: {}", e))?;
-    let kid = header.kid.ok_or("Missing kid in token header")?;
+    let kid = decode_header(token)
+        .map_err(|e| format!("Invalid token header: {e}"))?
+        .kid
+        .ok_or("Missing key ID (kid) in token")?;
 
-    let jwks = get_jwks(jwks_url, redis).await?;
-    let jwk = jwks
-        .keys
-        .iter()
-        .find(|k| k.kid == kid)
-        .ok_or("Key ID not found")?;
-
-    let key =
-        DecodingKey::from_rsa_components(&jwk.n, &jwk.e).map_err(|_| "Invalid RSA components")?;
+    let jwk = get_jwk(jwks_url, &kid, redis).await?;
+    let key = DecodingKey::from_rsa_components(&jwk.n, &jwk.e)
+        .map_err(|_| "Invalid RSA key components")?;
 
     let mut validation = Validation::new(Algorithm::RS256);
-
-    validation.set_issuer(&[jwt_issuer]);
+    validation.set_issuer(&[issuer]);
     validation.validate_aud = false;
-    validation.leeway = 60;
+    validation.leeway = TOKEN_LEEWAY;
 
-    match decode::<Claims>(token, &key, &validation) {
-        Ok(token_data) => Ok(token_data.claims),
-        Err(e) => {
-            println!("JWT Validation Error: {:?}", e);
-            Err(e.to_string())
-        }
-    }
+    decode::<Claims>(token, &key, &validation)
+        .map(|data| data.claims)
+        .map_err(|e| format!("JWT validation failed: {e}"))
+}
+
+async fn get_jwk(url: &str, kid: &str, redis: &RedisService) -> Result<Jwk, String> {
+    let jwks = get_jwks(url, redis).await?;
+    jwks.keys
+        .into_iter()
+        .find(|k| k.kid == kid)
+        .ok_or_else(|| format!("Key ID {kid} not found in JWKS"))
 }
 
 async fn get_jwks(url: &str, redis: &RedisService) -> Result<Jwks, String> {
-    const CACHE_KEY: &str = "jwks_cache_key";
-
-    if let Some(cached) = redis.get(CACHE_KEY).await {
+    if let Some(cached) = redis.get(JWKS_CACHE_KEY).await {
         if let Ok(jwks) = serde_json::from_str(&cached) {
             return Ok(jwks);
         }
     }
 
-    let response = reqwest::get(url)
+    let jwks: Jwks = reqwest::get(url)
         .await
-        .map_err(|e| format!("JWKS Fetch error: {}", e))?;
-    let jwks: Jwks = response
+        .map_err(|e| format!("JWKS fetch failed: {e}"))?
         .json()
         .await
-        .map_err(|e| format!("JWKS Parse error: {}", e))?;
+        .map_err(|e| format!("JWKS parse failed: {e}"))?;
 
     if let Ok(json) = serde_json::to_string(&jwks) {
-        redis.set(CACHE_KEY, &json, 86400).await;
+        let _ = redis.set(JWKS_CACHE_KEY, &json, CACHE_TTL).await;
     }
 
     Ok(jwks)

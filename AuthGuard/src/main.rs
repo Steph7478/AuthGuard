@@ -1,30 +1,34 @@
-use authguard::config;
-use authguard::policy::Policy;
-use authguard::routes::{private_routes, public_routes};
-use authguard::services::RedisService;
-use axum::Router;
+mod auth;
+mod config;
+mod handler;
+mod middleware;
+mod observability;
+mod policy;
+mod routes;
+mod services;
+mod utils;
+
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use axum::Router;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Arc::new(config::load_config());
-    let redis = Arc::new(RedisService::new(&config.redis_url));
-    let policy = Arc::new(Policy::new(redis.clone()));
+    let cfg = Arc::new(config::load_config());
+    let redis = Arc::new(services::RedisService::new(&cfg.redis_url));
+    let policy = Arc::new(policy::Policy::new(redis.clone()));
 
     let app = Router::new()
-        .merge(public_routes(config.clone()))
-        .merge(private_routes(
-            config.clone(),
-            redis.clone(),
-            policy.clone(),
-        ));
+        .merge(routes::public_routes(cfg.clone()))
+        .merge(routes::private_routes(cfg.clone(), redis, policy));
 
-    let addr: SocketAddr = format!("0.0.0.0:{}", config.port).parse()?;
+    let port = cfg.port.clone();
+    let addr: SocketAddr = format!("0.0.0.0:{}", port).parse()?;
     println!("Server listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
 }

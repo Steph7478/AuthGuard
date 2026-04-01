@@ -1,5 +1,4 @@
-// src/config.rs
-use dotenv;
+use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -16,11 +15,19 @@ pub struct AppConfig {
     pub redirect_uri: String,
 }
 
-pub fn load_config() -> AppConfig {
-    dotenv::dotenv().ok();
+impl AppConfig {
+    pub fn token_endpoint(&self) -> String {
+        format!(
+            "{}/auth/realms/{}/protocol/openid-connect/token",
+            self.keycloak_url, self.realm
+        )
+    }
+}
 
+pub fn load_config() -> AppConfig {
+    dotenv().ok();
     AppConfig {
-        port: env::var("PORT").unwrap_or("3000".into()),
+        port: env::var("PORT").unwrap_or_else(|_| "3000".into()),
         redis_url: env::var("REDIS_URL").expect("REDIS_URL must be set"),
         jwks_url: env::var("JWKS_URL").expect("JWKS_URL must be set"),
         jwt_issuer: env::var("JWT_ISSUER").expect("JWT_ISSUER must be set"),

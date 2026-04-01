@@ -8,7 +8,7 @@ pub struct RedisService {
 impl RedisService {
     pub fn new(url: &str) -> Self {
         Self {
-            client: redis::Client::open(url).unwrap(),
+            client: redis::Client::open(url).expect("Invalid Redis URL"),
         }
     }
 
@@ -16,29 +16,22 @@ impl RedisService {
         self.client
             .get_multiplexed_tokio_connection()
             .await
-            .unwrap()
+            .expect("Failed to connect to Redis")
     }
 
     pub async fn get(&self, key: &str) -> Option<String> {
         self.conn().await.get(key).await.ok()
     }
 
-    pub async fn set(&self, key: &str, value: &str, ttl_secs: u64) {
-        let _: () = self
-            .conn()
-            .await
-            .set_ex(key, value, ttl_secs)
-            .await
-            .unwrap();
+    pub async fn set(&self, key: &str, value: &str, ttl: u64) -> Result<(), redis::RedisError> {
+        self.conn().await.set_ex(key, value, ttl).await
     }
 
     pub async fn incr(&self, key: &str) -> Result<i64, redis::RedisError> {
-        let mut conn = self.conn().await;
-        conn.incr(key, 1).await
+        self.conn().await.incr(key, 1).await
     }
 
-    pub async fn expire(&self, key: &str, seconds: u64) -> Result<bool, redis::RedisError> {
-        let mut conn = self.conn().await;
-        conn.expire(key, seconds as i64).await
+    pub async fn expire(&self, key: &str, secs: u64) -> Result<bool, redis::RedisError> {
+        self.conn().await.expire(key, secs as i64).await
     }
 }
