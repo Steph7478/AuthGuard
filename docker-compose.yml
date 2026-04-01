@@ -11,9 +11,15 @@ services:
       - user-service
     networks:
       - authguard-network
+    profiles:
+      - prod
+      - dev
+      - local
 
   authguard:
-    build: ./AuthGuard
+    build: 
+      context: ./AuthGuard
+      dockerfile: Dockerfile
     container_name: authguard
     ports:
       - "3000:3000"
@@ -23,6 +29,28 @@ services:
       - keycloak
     networks:
       - authguard-network
+    profiles:
+      - prod
+
+  authguard-dev:
+    build: 
+      context: ./AuthGuard
+      dockerfile: Dockerfile.dev
+    container_name: authguard_dev
+    ports:
+      - "3000:3000"
+    env_file: ./AuthGuard/.env
+    volumes:
+      - ./AuthGuard/src:/app/src
+      - ./AuthGuard/Cargo.toml:/app/Cargo.toml
+      - ./AuthGuard/Cargo.lock:/app/Cargo.lock
+    depends_on:
+      - redis
+      - keycloak
+    networks:
+      - authguard-network
+    profiles:
+      - dev
 
   user-service:
     image: node:18-alpine
@@ -30,6 +58,10 @@ services:
     command: sh -c "echo 'const http = require(\"http\"); http.createServer((req, res) => { res.end(\"OK\"); }).listen(4001);' > server.js && node server.js"
     networks:
       - authguard-network
+    profiles:
+      - prod
+      - dev
+      - local
 
   keycloak:
     image: quay.io/keycloak/keycloak:25.0.6
@@ -53,12 +85,22 @@ services:
       - "8080:8080"
     networks:
       - authguard-network
+    profiles:
+      - prod
+      - dev
+      - local
 
   redis:
     image: redis:7-alpine
     container_name: redis_cache
+    ports:
+      - "6379:6379"
     networks:
       - authguard-network
+    profiles:
+      - prod
+      - dev
+      - local
 
 networks:
   authguard-network:
