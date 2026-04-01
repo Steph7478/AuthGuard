@@ -20,7 +20,7 @@ API_GATEWAY_URL="http://localhost/api/users/me"
 AUTHGUARD_HEALTH="http://localhost:3000/health"
 
 # --- 2. AUTHGUARD HEALTH CHECK ---
-echo -e "\n${YELLOW}[2/6] Testing AuthGuard Connectivity:${NC}"
+echo -e "\n${YELLOW}[1/5] Testing AuthGuard Connectivity:${NC}"
 HEALTH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$AUTHGUARD_HEALTH" 2>/dev/null)
 
 if [ "$HEALTH_RESPONSE" = "200" ]; then
@@ -34,7 +34,7 @@ else
 fi
 
 # --- 3. CLIENT CONFIGURATION ---
-echo -e "\n${YELLOW}[3/6] Keycloak Client Configuration:${NC}"
+echo -e "\n${YELLOW}[2/5] Keycloak Client Configuration:${NC}"
 echo "1) Public (No Client Secret)"
 echo "2) Confidential (With Client Secret)"
 read -p "Select (1/2): " CLIENT_TYPE
@@ -46,7 +46,7 @@ if [ "$CLIENT_TYPE" = "2" ]; then
     read -p "Enter Client Secret (Press Enter for default): " CLIENT_SECRET
     CLIENT_SECRET=${CLIENT_SECRET:-$DEFAULT_SECRET}
     
-    echo -e "\n${YELLOW}[4/6] Authentication Flow Type:${NC}"
+    echo -e "\n${YELLOW}[3/5] Authentication Flow Type:${NC}"
     echo "1) client_credentials (Service-to-Service)"
     echo "2) password (Real User - Supports Roles/Groups)"
     read -p "Select (1/2): " FLOW
@@ -84,7 +84,7 @@ if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] && [ "$TOKEN" != "" ]; then
     
     # Display Claims if jq is installed
     if command -v jq &> /dev/null; then
-        echo -e "\n${YELLOW}[5/6] Token Payload (Claims):${NC}"
+        echo -e "\n${YELLOW}[4/5] Token Payload (Claims):${NC}"
         # Extract and decode the payload part (second segment)
         PAYLOAD=$(echo "$TOKEN" | cut -d'.' -f2)
         # Add padding to base64 if needed
@@ -93,7 +93,7 @@ if [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] && [ "$TOKEN" != "" ]; then
     fi
 
     # --- 5. NGINX GATEWAY TEST ---
-    echo -e "\n${YELLOW}[6/6] Testing Access via Nginx Gateway:${NC}"
+    echo -e "\n${YELLOW}[5/5] Testing Access via Nginx Gateway:${NC}"
     echo -e "${BLUE}Calling: ${API_GATEWAY_URL}${NC}"
     
     RESULT=$(curl -s -w "\nHTTP_CODE:%{http_code}" \
