@@ -51,6 +51,9 @@ services:
     ports:
       - "3000:3000"
     env_file: ./AuthGuard/.env
+    environment:
+      - CARGO_WATCH_POLL=1
+      - CARGO_WATCH_POLL_INTERVAL=5
     volumes:
       - ./AuthGuard/src:/app/src
       - ./AuthGuard/Cargo.toml:/app/Cargo.toml

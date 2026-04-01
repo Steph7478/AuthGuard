@@ -11,27 +11,13 @@ echo -e "${BLUE}═════════════════════�
 echo -e "${BLUE}          AuthGuard Full Stack - Test Suite           ${NC}"
 echo -e "${BLUE}══════════════════════════════════════════════════════${NC}"
 
-# --- ENVIRONMENT SETTINGS ---
+# --- 1. ENVIRONMENT SETTINGS ---
 # Default secret confirmed in your setup
 DEFAULT_SECRET="qiQ8IospPnLNfL2y5x1hfs2Bpf10D0ky"
 
-# Access URLs - FIXED: Keycloak URL now matches your nginx proxy config
 KEYCLOAK_URL="http://localhost/auth/realms/authguard/protocol/openid-connect/token"
 API_GATEWAY_URL="http://localhost/api/users/me"
 AUTHGUARD_HEALTH="http://localhost:3000/health"
-
-# --- 1. CONTAINER STATUS CHECK ---
-echo -e "\n${YELLOW}[1/6] Checking Container Status:${NC}"
-SERVICES=("nginx_gateway" "authguard" "keycloak_auth" "redis_cache" "user_service")
-
-for service in "${SERVICES[@]}"; do
-    STATUS=$(docker ps -q -f name=$service)
-    if [ -n "$STATUS" ]; then
-        echo -e "  ${GREEN}✓ $service:${NC} Running"
-    else
-        echo -e "  ${RED}✗ $service:${NC} Stopped or Not Found"
-    fi
-done
 
 # --- 2. AUTHGUARD HEALTH CHECK ---
 echo -e "\n${YELLOW}[2/6] Testing AuthGuard Connectivity:${NC}"

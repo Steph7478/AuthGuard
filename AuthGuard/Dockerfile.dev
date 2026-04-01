@@ -13,4 +13,4 @@ COPY src ./src
 
 EXPOSE 3000
 
-CMD ["cargo", "watch", "-x", "run --release"]
+CMD ["cargo", "watch", "--poll", "-x", "run --release"]
