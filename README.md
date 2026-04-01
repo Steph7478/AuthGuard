@@ -13,6 +13,7 @@ A high-performance authentication and authorization gateway built in Rust. AuthG
 
 <br/>
 
+
 ## 🛠️ Getting Started
 
 ### 1. Installation
@@ -23,12 +24,12 @@ cd authguard
 
 ### 2. Execution
 ```bash
-docker-compose up -d
+docker-compose --profile (dev/prod/local) up -d
 ```
 
 ### 3. Test
 ```bash
-./test.sh
+./test_auth.sh
 ```
 
 ### 4. Login Flow
@@ -48,17 +49,38 @@ AuthGuard provides clean, user-friendly login endpoints:
 
 | Endpoint | Method | Security Policy |
 |:---|:---|:---|
-| /auth/* | ANY | Handled by Nginx -> Proxy to Keycloak |
-| /admin | ANY | Requires /TI/Infraestrutura group |
-| /metrics | GET | Public (Prometheus Format) |
-| /* | ANY | Valid JWT required -> Proxy to Target Service |
+| `/auth/*` | ANY | Handled by Nginx -> Proxy to Keycloak |
+| `/admin` | ANY | Requires `/TI/Infraestrutura` group |
+| `/metrics` | GET | Public (Prometheus Format) |
+| `/*` | ANY | Valid JWT required -> Proxy to Target Service |
 
 <br/>
 
 ## 🏗️ Architecture Overview
 
 AuthGuard sits behind an **Nginx** instance. When a request hits `http://localhost`:
-1. **Nginx** routes `/auth` directly to Keycloak.
+1. **Nginx** routes `/auth/*` directly to Keycloak.
 2. **Nginx** routes all other calls to **AuthGuard (Rust)**.
 3. **AuthGuard** validates the `Authorization` header using Keycloak's JWKS.
 4. If the token is valid and the group is authorized (extracted from the `groups` claim), the request proceeds to the **Target Service**.
+
+### Nginx Configuration Highlights
+
+| Location | Purpose |
+|:---|:---|
+| `/login` | Redirects to Keycloak login page |
+| `/login/google` | Redirects to Keycloak with Google IDP hint |
+| `/callback` | OAuth2 callback handled by AuthGuard |
+| `/validate` | Token validation endpoint |
+| `/metrics` | Prometheus metrics endpoint |
+| `/health` | Health check endpoint |
+| `/auth/*` | Proxies directly to Keycloak |
+| `/_validate` | Internal auth request endpoint with rate limiting |
+| `/api/*` | Protected API endpoints with auth validation and rate limiting |
+
+### Rate Limiting
+
+- **API endpoints**: 100 requests/second with burst of 20
+- **Validate endpoint**: 30 requests/second with burst of 10
+
+All rate limits are applied per IP address using Nginx's `limit_req` module.
