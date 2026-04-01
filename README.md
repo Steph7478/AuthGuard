@@ -16,24 +16,29 @@ A high-performance authentication and authorization gateway built in Rust. AuthG
 ## 🛠️ Getting Started
 
 ### 1. Installation
-``bash
+```bash
 git clone git@github.com:Steph7478/AuthGuard.git
 cd authguard
-``
+```
 
 ### 2. Execution
-``bash
+```bash
 docker-compose up -d
-``
+```
 
 ### 3. Test
-``bash
+```bash
 ./test.sh
-``
+```
 
-### 4. Login Flow (Standard OIDC)
-To authenticate via Google and skip the Keycloak selection screen, redirect your frontend to:
-http://localhost/auth/realms/authguard/protocol/openid-connect/auth?client_id=authguard-service&response_type=code&scope=openid%20profile%20email&redirect_uri=http://localhost/callback&kc_idp_hint=google
+### 4. Login Flow
+
+AuthGuard provides clean, user-friendly login endpoints:
+
+| Endpoint | Description |
+|:---|:---|
+| `/login` | Standard Keycloak login |
+| `/login/google` | Direct login with Google (skips Keycloak selection screen) |
 
 > **Note:** Ensure `http://localhost/callback` is added to **Valid Redirect URIs** in your Keycloak Client settings.
 

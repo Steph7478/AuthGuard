@@ -16,7 +16,8 @@ pub fn extract_ip(req: &Request<Body>) -> String {
 }
 
 pub fn extract_token(req: &Request<Body>) -> Option<&str> {
-    req.headers()
+    if let Some(token) = req
+        .headers()
         .get("Authorization")
         .and_then(|h| h.to_str().ok())
         .and_then(|auth| {
@@ -25,5 +26,21 @@ pub fn extract_token(req: &Request<Body>) -> Option<&str> {
             } else {
                 None
             }
+        })
+    {
+        return Some(token);
+    }
+
+    req.headers()
+        .get("Cookie")
+        .and_then(|h| h.to_str().ok())
+        .and_then(|cookies| {
+            for cookie in cookies.split(';') {
+                let cookie = cookie.trim();
+                if cookie.starts_with("access_token=") {
+                    return Some(&cookie["access_token=".len()..]);
+                }
+            }
+            None
         })
 }
