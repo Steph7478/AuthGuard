@@ -1,4 +1,4 @@
-use crate::{auth, state::AppState, utils};
+use crate::{auth, state::AppState};
 use axum::{
     body::Body,
     extract::{Extension, Request},
@@ -8,12 +8,20 @@ use axum::{
 use http::StatusCode;
 use std::sync::Arc;
 
+pub fn extract_token(req: &Request<Body>) -> Option<&str> {
+    req.headers()
+        .get("Authorization")?
+        .to_str()
+        .ok()?
+        .strip_prefix("Bearer ")
+}
+
 pub async fn auth_middleware(
     Extension(state): Extension<Arc<AppState>>,
     mut req: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let token = utils::extract_token(&req).ok_or(StatusCode::UNAUTHORIZED)?;
+    let token = extract_token(&req).ok_or(StatusCode::UNAUTHORIZED)?;
 
     let claims = auth::verify(
         token,

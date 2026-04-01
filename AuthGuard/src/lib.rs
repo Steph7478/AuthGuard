@@ -6,4 +6,3 @@ pub mod observability;
 pub mod routes;
 pub mod services;
 pub mod state;
-pub mod utils;
