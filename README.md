@@ -7,12 +7,11 @@ A high-performance authentication and authorization gateway built in Rust. AuthG
 * 🔐 **JWT Validation**: Validates tokens from Keycloak using JWKS via Axum/Hyper.
 * 🛡️ **Group-Based Auth**: Restricts access based on Keycloak hierarchy (e.g., `/TI/Infraestrutura`).
 * ⚡ **High Performance**: Built with Rust, Axum, and Redis for low-latency checks.
-* 📊 **Rate Limiting**: Built-in protection per IP address via Redis.
+* 📊 **Rate Limiting**: Per-IP rate limiting handled by Nginx (100 req/s for API, 30 req/s for validation).
 * 📈 **Observability**: Prometheus metrics endpoint for monitoring.
 * 🔄 **Google IDP**: Out-of-the-box support for Google Login with `kc_idp_hint`.
 
 <br/>
-
 
 ## 🛠️ Getting Started
 
