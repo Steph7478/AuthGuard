@@ -6,7 +6,7 @@ use http::{header, StatusCode};
 use serde_json::json;
 use std::{collections::HashMap, sync::Arc};
 
-use crate::config::AppConfig;
+use crate::state::AppState;
 
 macro_rules! err {
     ($status:expr, $msg:expr) => {
@@ -16,8 +16,10 @@ macro_rules! err {
 
 pub async fn callback_handler(
     Query(params): Query<HashMap<String, String>>,
-    State(config): State<Arc<AppConfig>>,
+    State(state): State<Arc<AppState>>,
 ) -> Response {
+    let config = &state.config;
+
     let code = match params.get("code") {
         Some(c) => c,
         None => err!(StatusCode::BAD_REQUEST, "Missing code"),

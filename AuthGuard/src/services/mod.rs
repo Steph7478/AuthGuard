@@ -26,12 +26,4 @@ impl RedisService {
     pub async fn set(&self, key: &str, value: &str, ttl: u64) -> Result<(), redis::RedisError> {
         self.conn().await.set_ex(key, value, ttl).await
     }
-
-    pub async fn incr(&self, key: &str) -> Result<i64, redis::RedisError> {
-        self.conn().await.incr(key, 1).await
-    }
-
-    pub async fn expire(&self, key: &str, secs: u64) -> Result<bool, redis::RedisError> {
-        self.conn().await.expire(key, secs as i64).await
-    }
 }
