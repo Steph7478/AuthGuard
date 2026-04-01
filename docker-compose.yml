@@ -8,6 +8,20 @@ services:
       - ./AuthGuard/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - authguard-network
+    command: 
+      - sh
+      - -c
+      - |
+        echo "Waiting for authguard to start..."
+        while true; do
+          if nc -z authguard 3000 2>/dev/null; then
+            echo "Authguard is ready! Starting nginx..."
+            nginx -g 'daemon off;'
+            exit 0
+          fi
+          echo "Still waiting for authguard..."
+          sleep 10
+        done
     profiles:
       - prod
       - dev
@@ -33,7 +47,7 @@ services:
     build: 
       context: ./AuthGuard
       dockerfile: Dockerfile.dev
-    container_name: authguard_dev
+    container_name: authguard
     ports:
       - "3000:3000"
     env_file: ./AuthGuard/.env
@@ -41,6 +55,7 @@ services:
       - ./AuthGuard/src:/app/src
       - ./AuthGuard/Cargo.toml:/app/Cargo.toml
       - ./AuthGuard/Cargo.lock:/app/Cargo.lock
+      - target-cache:/app/target
     depends_on:
       - redis
       - keycloak
@@ -102,3 +117,6 @@ services:
 networks:
   authguard-network:
     driver: bridge
+
+volumes:
+  target-cache:

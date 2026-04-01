@@ -17,10 +17,9 @@ impl Policy {
     pub async fn check_rate_limit(&self, ip: &str) -> bool {
         let key = format!("rate_limit:{}", ip);
 
-        let count: i64 = match self.redis.get(&key).await {
-            Some(val) => val.parse().unwrap_or(0),
-            None => 0,
-        };
+        let count = self.redis.get(&key).await
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0);
 
         if count >= self.rate_limit_per_minute as i64 {
             return false;
@@ -36,6 +35,6 @@ impl Policy {
     }
 }
 
-pub fn load_policy() -> Policy {
-    unimplemented!("Policy::load_policy() should be called after Redis is created")
+pub fn load_policy(redis: Arc<RedisService>) -> Policy {
+    Policy::new(redis)
 }
