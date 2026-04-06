@@ -5,7 +5,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./AuthGuard/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./AuthGuard/nginx/:/etc/nginx/:ro
     networks:
       - authguard-network
     command: 

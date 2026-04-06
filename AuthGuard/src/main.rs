@@ -6,7 +6,6 @@ mod observability;
 mod routes;
 mod services;
 mod state;
-mod utils;
 
 use crate::state::AppState;
 use axum::{Extension, Router};
